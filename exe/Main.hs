@@ -10,8 +10,8 @@ main :: IO ()
 main = do
   cli <- runCLI $ showVersion version
   case cli of
-    ReadHEX -> BS.putStr . readIntelHEX =<< getContents
-    WriteHEX -> fail "not implemented"
+    ReadHEX  -> BS.putStr . readIntelHEX  =<< getContents
+    WriteHEX -> putStrLn  . writeIntelHEX =<< BS.getContents
 
 data CLI = ReadHEX | WriteHEX
 
