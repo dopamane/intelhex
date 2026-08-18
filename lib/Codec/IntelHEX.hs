@@ -47,12 +47,16 @@ w :: Word16 -> ByteString -> Builder
 w addr bs
   | BS.null bs = ":00000001FF"
   | otherwise  = mconcat
-    [ ":", unbyte bc, unbyte (fromIntegral $ addr `shiftR` 8), unbyte (fromIntegral addr)
-    , "00", foldMap unbyte (BS.unpack h), "FF", "\n", w (addr + fromIntegral bc) rest
+    [ ":", unbyte bc, unbyte addrh, unbyte addrl, "00", foldMap unbyte d
+    , unbyte $ complement (sum (bc:addrh:addrl:d)) + 1, "\n"
+    , w (addr + fromIntegral bc) rest
     ]
   where
     (h, rest) = BS.splitAt 16 bs
     bc = fromIntegral $ BS.length h
+    addrh = fromIntegral $ addr `shiftR` 8
+    addrl = fromIntegral addr
+    d = BS.unpack h
 
 unbyte :: Word8 -> Builder
 unbyte b = fromString $ toUpper <$> showHex (b `shiftR` 4) "" ++ showHex (b .&. 0xF) ""
