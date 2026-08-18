@@ -1,17 +1,19 @@
 module Main (main) where
 
 import Codec.IntelHEX
+import Data.ByteString.Builder
 import qualified Data.ByteString.Lazy as BS
 import Data.Version
 import Options.Applicative
 import Paths_intelhex
+import System.IO
 
 main :: IO ()
 main = do
   cli <- runCLI $ showVersion version
   case cli of
     ReadHEX -> BS.putStr . readIntelHEX =<< getContents
-    WriteHEX -> putStrLn . writeIntelHEX =<< BS.getContents
+    WriteHEX -> hPutBuilder stdout . buildIntelHEX =<< BS.getContents
 
 data CLI = ReadHEX | WriteHEX
 

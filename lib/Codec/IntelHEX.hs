@@ -1,9 +1,13 @@
-module Codec.IntelHEX (readIntelHEX, writeIntelHEX) where
+{-# LANGUAGE OverloadedStrings #-}
+
+module Codec.IntelHEX (readIntelHEX, buildIntelHEX, writeIntelHEX) where
 
 import Data.Bits
+import Data.ByteString.Builder
 import Data.ByteString.Lazy (ByteString)
 import qualified Data.ByteString.Lazy as BS
 import Data.Char
+import Data.String
 import Data.Word
 import Numeric
 
@@ -33,20 +37,22 @@ byte h l = nyb h `shiftL` 4 .|. nyb l
       where
         n = fromIntegral $ ord $ toLower c
 
-writeIntelHEX :: ByteString -> String
-writeIntelHEX = w 0
+writeIntelHEX :: ByteString -> ByteString
+writeIntelHEX = toLazyByteString . buildIntelHEX
 
-w :: Word16 -> ByteString -> String
+buildIntelHEX :: ByteString -> Builder
+buildIntelHEX = w 0
+
+w :: Word16 -> ByteString -> Builder
 w addr bs
   | BS.null bs = ":00000001FF"
-  | otherwise  =
-    let bc = fromIntegral $ BS.length h
-        addrStr = unbyte (fromIntegral $ addr `shiftR` 8) ++ unbyte (fromIntegral addr)
-        d = foldMap unbyte $ BS.unpack h
-        cs = "FF"
-    in ":" ++ unbyte bc ++ addrStr ++ "00" ++ d ++ cs ++ "\n" ++ w (addr + fromIntegral bc) rest
+  | otherwise  = mconcat
+    [ ":", unbyte bc, unbyte (fromIntegral $ addr `shiftR` 8), unbyte (fromIntegral addr)
+    , "00", foldMap unbyte (BS.unpack h), "FF", "\n", w (addr + fromIntegral bc) rest
+    ]
   where
     (h, rest) = BS.splitAt 16 bs
+    bc = fromIntegral $ BS.length h
 
-unbyte :: Word8 -> String
-unbyte b = toUpper <$> showHex (b `shiftR` 4) "" ++ showHex (b .&. 0xF) ""
+unbyte :: Word8 -> Builder
+unbyte b = fromString $ toUpper <$> showHex (b `shiftR` 4) "" ++ showHex (b .&. 0xF) ""
