@@ -10,8 +10,8 @@ main :: IO ()
 main = do
   cli <- runCLI $ showVersion version
   case cli of
-    ReadHEX  -> BS.putStr . readIntelHEX  =<< getContents
-    WriteHEX -> putStrLn  . writeIntelHEX =<< BS.getContents
+    ReadHEX -> BS.putStr . readIntelHEX =<< getContents
+    WriteHEX -> putStrLn . writeIntelHEX =<< BS.getContents
 
 data CLI = ReadHEX | WriteHEX
 
@@ -23,6 +23,5 @@ runCLI = customExecParser prefs' . pinfo
 pinfo :: String -> ParserInfo CLI
 pinfo v = info (parser <**> simpleVersioner v <**> helper) $ progDesc "Intel HEX"
   where
-    parser =
-      flag' ReadHEX (short 'r' <> long "read" <> help "Read Intel HEX and output binary")
-        <|> flag' WriteHEX (short 'w' <> long "write" <> help "Read binary and output Intel HEX")
+    parser = flag' ReadHEX  (short 'r' <> long "read"  <> help "Read Intel HEX and output binary")
+         <|> flag' WriteHEX (short 'w' <> long "write" <> help "Input binary and write Intel HEX")
