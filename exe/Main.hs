@@ -11,9 +11,10 @@ import System.IO
 main :: IO ()
 main = do
   cli <- runCLI $ showVersion version
-  case cli of
-    ReadHEX -> BS.putStr . readIntelHEX =<< getContents
-    WriteHEX -> hPutBuilder stdout . buildIntelHEX =<< BS.getContents
+  dat <- case cli of
+    ReadHEX -> readIntelHEX <$> getContents
+    WriteHEX -> writeIntelHEX <$> BS.getContents
+  hPutBuilder stdout dat
 
 data CLI = ReadHEX | WriteHEX
 

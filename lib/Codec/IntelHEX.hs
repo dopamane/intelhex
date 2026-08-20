@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Codec.IntelHEX (readIntelHEX, buildIntelHEX, writeIntelHEX) where
+module Codec.IntelHEX (readIntelHEX, writeIntelHEX) where
 
 import Data.Bits
 import Data.ByteString.Builder
@@ -11,10 +11,10 @@ import Data.String
 import Data.Word
 import Numeric
 
-readIntelHEX :: String -> ByteString
+readIntelHEX :: String -> Builder
 readIntelHEX = r
 
-r :: String -> ByteString
+r :: String -> Builder
 r (':':'0':'0':'0':'0':'0':'0':'0':'1':_:_:_) = mempty
 r (':':b:c:_a3:_a2:_a1:_a0:'0':'0':rest) =
   let (d, rest') = splitAt (fromIntegral (byte b c) * 2) rest
@@ -24,9 +24,9 @@ r ('\n':rest) = r rest
 r (c:_) = error $ "unxpected char \'" <> [c] <> "\'"
 r [] = error "unexpected eof"
 
-readData :: String -> ByteString
+readData :: String -> Builder
 readData "" = mempty
-readData (h:l:rest) = BS.singleton (byte h l) <> readData rest
+readData (h:l:rest) = word8 (byte h l) <> readData rest
 readData _ = error "read data malformed"
 
 byte :: Char -> Char -> Word8
@@ -37,11 +37,8 @@ byte h l = nyb h `shiftL` 4 .|. nyb l
       where
         n = fromIntegral $ ord $ toLower c
 
-writeIntelHEX :: ByteString -> ByteString
-writeIntelHEX = toLazyByteString . buildIntelHEX
-
-buildIntelHEX :: ByteString -> Builder
-buildIntelHEX = w 0
+writeIntelHEX :: ByteString -> Builder
+writeIntelHEX = w 0
 
 w :: Word16 -> ByteString -> Builder
 w addr bs
