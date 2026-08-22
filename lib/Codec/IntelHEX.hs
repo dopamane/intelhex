@@ -45,7 +45,7 @@ w addr bs
   | BS.null bs = ":00000001FF"
   | otherwise  = mconcat
     [ ":", unbyte bc, unbyte addrh, unbyte addrl, "00", foldMap unbyte d
-    , unbyte $ complement (sum (bc:addrh:addrl:d)) + 1, "\n"
+    , unbyte $ checksum bc addrh addrl d, "\n"
     , w (addr + fromIntegral bc) rest
     ]
   where
@@ -54,6 +54,9 @@ w addr bs
     addrh = fromIntegral $ addr `shiftR` 8
     addrl = fromIntegral addr
     d = BS.unpack h
+
+checksum :: Word8 -> Word8 -> Word8 -> [Word8] -> Word8
+checksum bc addrh addrl d = complement (sum (bc:addrh:addrl:d)) + 1
 
 unbyte :: Word8 -> Builder
 unbyte b = fromString $ toUpper <$> showHex (b `shiftR` 4) "" ++ showHex (b .&. 0xF) ""
