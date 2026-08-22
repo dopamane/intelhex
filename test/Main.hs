@@ -3,6 +3,7 @@
 module Main (main) where
 
 import Codec.IntelHEX
+import Data.ByteString.Builder
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.ByteString.Lazy.Char8 as BSC
 import Data.String
@@ -22,9 +23,9 @@ main = defaultMain $ testGroup "Test.IntelHEX"
 helloWorldTest :: TestTree
 helloWorldTest = testCaseSteps "hello-world" $ \step -> do
   step "read"
-  readIntelHEX helloWorldHEX @?= "Hello, World\n"
+  (toLazyByteString . readIntelHEX) helloWorldHEX @?= "Hello, World\n"
   step "write"
-  writeIntelHEX "Hello, World\n" @?= fromString (init helloWorldHEX)
+  (toLazyByteString . writeIntelHEX) "Hello, World\n" @?= fromString (init helloWorldHEX)
 
 helloWorldHEX :: String
 helloWorldHEX = ":0D00000048656C6C6F2C20576F726C640AA1\n:00000001FF\n"
@@ -32,4 +33,4 @@ helloWorldHEX = ":0D00000048656C6C6F2C20576F726C640AA1\n:00000001FF\n"
 readAfterWriteTest :: TestTree
 readAfterWriteTest = testProperty "read-after-write" $ property $ do
   bs <- forAll $ BS.fromStrict <$> Gen.bytes (Range.linear 0 16384)
-  (readIntelHEX . BSC.unpack . writeIntelHEX) bs === bs
+  (toLazyByteString . readIntelHEX . BSC.unpack . toLazyByteString . writeIntelHEX) bs === bs
